@@ -96,67 +96,72 @@ function ComputeError( Λᵣ, Λⱼ, Vⱼ, A )
     return fwderr, bwderr, orterr
 end
 
+run_order = false;
+
 ###########################################################################################
 # Fix matrix condition number and varying the matrix order 
-# N = Int64.(round.(10 .^ range(2,3,length=10)));
-N = Int64.(round.(range(100,1000,length=20)));
-kappa = 1e8;
+if run_order 
+    # N = Int64.(round.(10 .^ range(2,3,length=10)));
+    N = Int64.(round.(range(100,1000,length=20)));
+    kappa = 1e8;
 
-# Set up the intermediate variables
-fwderrm2 = zeros(Float64, length(N), 1); 
-bwderrm2 = zeros(Float64, length(N), 1); 
-orterrm2 = zeros(Float64, length(N), 1); 
+    # Set up the intermediate variables
+    fwderrm2 = zeros(Float64, length(N), 1); 
+    bwderrm2 = zeros(Float64, length(N), 1); 
+    orterrm2 = zeros(Float64, length(N), 1); 
 
-fwderrm3 = zeros(Float64, length(N), 1); 
-bwderrm3 = zeros(Float64, length(N), 1); 
-orterrm3 = zeros(Float64, length(N), 1); 
+    fwderrm3 = zeros(Float64, length(N), 1); 
+    bwderrm3 = zeros(Float64, length(N), 1); 
+    orterrm3 = zeros(Float64, length(N), 1); 
 
-fwderrj = zeros(Float64, length(N), 1); 
-bwderrj = zeros(Float64, length(N), 1); 
-orterrj = zeros(Float64, length(N), 1); 
+    fwderrj = zeros(Float64, length(N), 1); 
+    bwderrj = zeros(Float64, length(N), 1); 
+    orterrj = zeros(Float64, length(N), 1); 
 
-tm2 = zeros(Float64, length(N), 1); 
-tm3 = zeros(Float64, length(N), 1); 
-tj = zeros(Float64, length(N), 1); 
-tm2Decompose = zeros(Float64, length(N), 4); 
-tm3Decompose = zeros(Float64, length(N), 4); 
+    tm2 = zeros(Float64, length(N), 1); 
+    tm3 = zeros(Float64, length(N), 1); 
+    tj = zeros(Float64, length(N), 1); 
+    tm2Decompose = zeros(Float64, length(N), 4); 
+    tm3Decompose = zeros(Float64, length(N), 4); 
 
-# Reset the random seed 
-Random.seed!(1);
+    # Reset the random seed 
+    Random.seed!(1);
 
-for i ∈ eachindex(N) 
-    n = N[i];
-    A = randsvd(Float64, n, n, -1*kappa, 3); 
-    
-    A1 = copy(A); 
-    time1 = time(); 
-    jacobi_eigen!(A1); 
-    tj[i] = time() - time1; 
+    for i ∈ eachindex(N) 
+        n = N[i];
+        A = randsvd(Float64, n, n, -1*kappa, 3); 
+        
+        A1 = copy(A); 
+        time1 = time(); 
+        jacobi_eigen!(A1); 
+        tj[i] = time() - time1; 
 
-    A2 = copy(A); 
-    time1 = time(); 
-    _,_,_,recordTime2 = mp2_jacobi_eigen!(A2, Float32); 
-    tm2[i] = time() - time1; 
-    tm2Decompose[i,:] = recordTime2
+        A2 = copy(A); 
+        time1 = time(); 
+        _,_,_,recordTime2 = mp2_jacobi_eigen!(A2, Float32); 
+        tm2[i] = time() - time1; 
+        tm2Decompose[i,:] = recordTime2
 
-    A3 = copy(A); 
-    time1 = time();
-    _,_,_,recordTime3 = mp3_jacobi_eigen!(A3, Float32, Float128); 
-    tm3[i] = time() - time1; 
-    tm3Decompose[i,:] = recordTime3
+        A3 = copy(A); 
+        time1 = time();
+        _,_,_,recordTime3 = mp3_jacobi_eigen!(A3, Float32, Float128); 
+        tm3[i] = time() - time1; 
+        tm3Decompose[i,:] = recordTime3
 
-    println("Finished $i of $(length(N)) for N = $n")
+        println("Finished $i of $(length(N)) for N = $n")
+    end
+
+    # Store the data into CSV
+    outputData = [N tj tm2 tm3 tm2Decompose tm3Decompose]
+    df = DataFrame(outputData, [:N, :tj, :tm2, :tm3, :tm2Prec, :tm2Apply, :tm2Jacobi, :tm2Else, :tm3Prec, :tm3Apply, :tm3Jacobi, :tm3Else])
+    CSV.write("./result/timing_order.csv", df)
+
 end
-
-# Store the data into CSV
-outputData = [N tj tm2 tm3 tm2Decompose tm3Decompose]
-df = DataFrame(outputData, [:N, :tj, :tm2, :tm3, :tm2Prec, :tm2Apply, :tm2Jacobi, :tm2Else, :tm3Prec, :tm3Apply, :tm3Jacobi, :tm3Else])
-CSV.write("./result/timing_order.csv", df)
 
 ##########################################################################
 # Fix matrix order and varying the condition number
 kappa = Int64.(round.(10 .^ range(3,14,length=20)));
-n = Int64.(100);
+n = Int64.(500);
 
 # Set up the intermediate variables
 fwderrm2 = zeros(Float64, length(kappa), 1); 

@@ -1,4 +1,4 @@
-function [V,D,NROT,NSWEEP,INFO] = cjacobi(A,EVEC)
+function [V,D,NROT,NSWEEP,INFO] = cjacobi(A, EVEC)
 %CJACOBI - Cyclic-by-row Jacobi algorithm
 %   
 %   Usage:
@@ -47,7 +47,7 @@ function [V,D,NROT,NSWEEP,INFO] = cjacobi(A,EVEC)
 %       = -1: The Jacobi algorithm does not converge in 30 iterations.
 %
 %   Author:
-%       Zhengbo Zhou, Nov 2024, Manchester 
+%       Zhengbo Zhou, June 2025, Manchester, UK
 %   
 %   Reference 
 %   Demmel & Veselic, Jacobi's method is more accurate than QR, 
@@ -80,8 +80,6 @@ end
 while done_rot && NSWEEP < maxiter
     NSWEEP = NSWEEP + 1;
     done_rot = false; 
-
-    % fprintf("---------------Sweep = %d------------------\n", NSWEEP); 
     
     % Main iteration 
     for p = 1:n-1

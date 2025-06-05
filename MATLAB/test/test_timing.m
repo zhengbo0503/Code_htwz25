@@ -1,8 +1,8 @@
 clc; clear; close all;
 
 % Load data from Julia
-data_order = readmatrix("../../Julia/example/timing_order.csv");
-data_kappa = readmatrix("../../Julia/example/timing_cnd.csv");
+data_order = readmatrix("../../Julia/result/timing_order.csv");
+data_kappa = readmatrix("../../Julia/result/timing_cnd.csv");
 
 % Separate data_order
 N = data_order(:,1);
@@ -42,6 +42,7 @@ plot(N, order_tm3, "->");
 xlim([100,1e3]);
 xlabel("$n$", Interpreter="latex")
 xticks([100,300,500,700,1000]);
+ylabel("Time (s)")
 axis square
 grid on
 
@@ -56,44 +57,69 @@ xticks([1e3,1e6,1e9,1e12,1e14])
 axis square
 grid on
 
-legend("Jacobi", "MP2Jacobi", "MP3Jacobi", Location="north", NumColumns=3);
+legend("Jacobi $\quad$", "MP2Jacobi $\quad$", "MP3Jacobi $\quad$", Location="north", NumColumns=3);
+
+pause();
 
 export_fig("./output/timing_union.pdf");
 
 %% Figure 2 for Decomposing the timing for Orders
 
-% Specical colors such that one can recognize the difference in grayscale
-segmentColors=[0,0,255;255,0,0;0,255,0;255,255,0]./255;
+% Apply preconditioner
+close all;
+qdratio = 100;
 
-close all; figure(2)
-subplot(1,2,1); 
-plt1=bar([order_tm2Prec, order_tm2Apply, order_tm2Jacobi, order_tm3Else] , "stacked");
-for k=1:numel(plt1)
-    plt1(k).FaceColor = segmentColors(k,:); 
-end
-xlim([1 21]);
-xticks([1,4,8,12,16,20]);
-xticklabels(N([1,4,8,12,16,20]))
+% MP3 "->", "Color", "#0072BD")
+% MP2 "-x", "Color", "#D95319")
+% MP3(Potential) "--*", "Color", "#77AC30")
+
+subplot(2,2,1);
+% semilogy(N,order_tm2Apply,'-x');
+plot(N,order_tm3Apply./order_tm2Apply,"->", "Color", "#0072BD");
+hold on;
+plot(N,(order_tm2Apply*qdratio)./order_tm2Apply, "--*", "Color", "#77AC30");
+xlim([100,1e3]);
 xlabel("$n$", Interpreter="latex")
-title("MP2Jacobi", Interpreter="latex")
-axis square 
+xticks([100,300,500,700,1000]);
+ylabel("Relative timings against MP2Jacobi")
+title("(a) Applying the preconditioner","FontWeight","normal");
+axis square
 grid on
+legend("MP3Jacobi", "MP3Jacobi (Potential)", "location", "best")
+% set(gca, "FontSize", 16);
+ 
 
-subplot(1,2,2); 
-plt2=bar([order_tm3Prec, order_tm3Apply, order_tm3Jacobi, order_tm3Else] , "stacked");
-for k=1:numel(plt2)
-    plt2(k).FaceColor = segmentColors(k,:); 
-end
-xlim([1 21]);
-xticks([1,4,8,12,16,20]);
-xticklabels(N([1,4,8,12,16,20]))
+subplot(2,2,2);
+% Apply Jacobi 
+plot(N, order_tm2Jacobi,"-x", "Color", "#D95319");
+hold on;
+plot(N, order_tm3Jacobi, "->", "Color", "#0072BD");
+xlim([100,1e3]);
 xlabel("$n$", Interpreter="latex")
-title("MP3Jacobi", Interpreter="latex")
-axis square 
+xticks([100,300,500,700,1000]);
+ylabel("Timings")
+title("(b) Applying the Jacobi algorithm","FontWeight","normal");
+axis square
 grid on
+legend("MP2Jacobi", "MP3Jacobi", "location", "northwest")
+% set(gca, "FontSize", 16);
 
-% Add grand legend
-legend("Form preconditioner", "Apply preconditioner", "Jacobi", "Everything else", ...
-    Location="northwest", NumColumns=4, Direction='normal')
+% Grand all 
+subplot(2,2,3);
+plot(N,order_tm3./order_tj,"->", "Color", "#0072BD");
+hold on;
+plot(N,(order_tm2Apply*(qdratio-1)+order_tm2)./order_tj, "--*", "Color", "#77AC30");
+plot(N,order_tm2./order_tj,"-x", "Color", "#D95319"); 
+% semilogy(N,order_tj,'--^');
+xlim([100,1e3]);
+xlabel("$n$", Interpreter="latex")
+xticks([100,300,500,700,1000]);
+ylabel("Relative timings against Jacobi")
+ylim([0.1,2]);
+title("(c) Total time","FontWeight","normal");
+axis square
+grid on
+legend("MP3Jacobi", "MP3Jacobi (Potential)", "MP2Jacobi", "location", "northwest")
+% set(gca, "FontSize", 16);
 
-export_fig("./output/timing_decompose.pdf");
+

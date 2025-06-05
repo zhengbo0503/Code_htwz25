@@ -47,11 +47,15 @@ function [V,D,NROT,NSWEEP,BOUND,SCOND] = mp_pjacobi(A, method)
 %       where i < j.
 %
 %   Author:
-%       Zhengbo Zhou, Nov 2024, Manchester 
+%       Zhengbo Zhou, June 2025, Manchester, UK
    
 % Require eigenvectors 
 EVEC = 1;
 
+% Scale?
+isscale = 0; 
+
+% MP3 or MP2?
 if nargin == 1 
     method = "mp3";
 end
@@ -59,12 +63,7 @@ end
 % Construct preconditioner at single precision
 [Qlow,~] = eig(single(A));
 [Qt,~] = qr(double(Qlow)); % HHQR
-% [Qt,~] = mgs(double(Qlow)); % MGS
-% [Qt,~] = ns(double(Qlow));
-% temp1 = double(Qlow);
-% I = eye(length(A));
-% temp1 = 0.5*temp1*(3*I - temp1'*temp1);
-% Qt = 0.5*temp1*(3*I - temp1'*temp1);
+
 
 % Compute spectral decomposition
 if method == "mp2"
@@ -72,17 +71,52 @@ if method == "mp2"
     Atcomp = (Atcomp + Atcomp')/2;
     [QJ,D,NROT,NSWEEP,INFO] = cjacobi(Atcomp,EVEC);
 elseif method == "mp3"
+    
+    % Apply the preconditioned matrix at high precision
     Athcomp = mp(Qt',34) * mp(A,34) * mp(Qt,34);
+    
+    % Scale the matrix to avoid overflow 
+    anrm = max(max(abs(Athcomp)));
+    [eps, ~, safmin, ~, ~, ~, ~] = float_params('d'); 
+    smlnum = safmin / eps; 
+    bignum = 1 / smlnum; 
+    rmin = sqrt( smlnum ); 
+    rmax = sqrt( bignum ); 
+
+    % In this part, one should notice, it will ensure the overflow does not
+    % happened.
+    if ( anrm > 0 ) && ( anrm < rmin ) 
+        isscale = 1; 
+        sigma = rmin / anrm; 
+    elseif ( anrm > rmax )
+        isscale = 1; 
+        sigma = rmax / anrm; 
+    end 
+    if isscale == 1 
+        Athcomp = sigma * Athcomp; 
+    end
+
+    % Check the number of zeros to detect underflow 
+    tmp1 = nnz(Athcomp); 
     Atcomp = double(Athcomp);
+    tmp2 = nnz(Athcomp); 
+    if tmp1 ~= tmp2 
+        warning("Underflow occurs during demote from high to low precision");
+    end
+
+    % Ensure symmetry 
     Atcomp = (Atcomp + Atcomp')/2;
+
+    % Apply Jacobi 
     [QJ,D,NROT,NSWEEP,INFO] = cjacobi(Atcomp,EVEC);
 end
 
-
+% Warn the user that the Jacobi algorithm does not converge
 if (INFO == -1)
     warning("Routine cjacobi does not converge");
 end
 
+% Further information is required 
 if nargout >= 5
     n = size(A,1);
     u = 2^(-53);
@@ -99,5 +133,9 @@ V = Qt * QJ;
 D = D(ind); 
 V = V(:,ind);
 
+% Scale the eigenvalues back
+if isscale == 1
+    D = D/sigma; 
+end
 end
 
