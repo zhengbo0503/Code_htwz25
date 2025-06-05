@@ -60,8 +60,29 @@ if nargin == 1
     method = "mp3";
 end
 
+% Scale the matrix to avoid overflow 
+isscale1 = 0;
+anrm1 = max(max(abs(A)));
+[eps1, ~, safmin1, ~, ~, ~, ~] = float_params('s'); 
+smlnum1 = safmin1 / eps1; 
+bignum1 = 1 / smlnum1; 
+rmin1 = sqrt( smlnum1 ); 
+rmax1 = sqrt( bignum1 ); 
+
+if ( anrm1 > 0 ) && ( anrm1 < rmin1 ) 
+    isscale1 = 1; 
+    sigma = rmin1 / anrm1; 
+elseif ( anrm1 > rmax1 )
+    isscale1 = 1; 
+    sigma1 = rmax1 / anrm1; 
+end 
+if isscale1 == 1 
+    Aprime = sigma1 * A; 
+end
+
+[Qlow,~] = eig(single(Aprime));
+
 % Construct preconditioner at single precision
-[Qlow,~] = eig(single(A));
 [Qt,~] = qr(double(Qlow)); % HHQR
 
 
