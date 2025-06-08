@@ -71,7 +71,7 @@ rmax1 = sqrt( bignum1 );
 
 if ( anrm1 > 0 ) && ( anrm1 < rmin1 ) 
     isscale1 = 1; 
-    sigma = rmin1 / anrm1; 
+    sigma1 = rmin1 / anrm1; 
 elseif ( anrm1 > rmax1 )
     isscale1 = 1; 
     sigma1 = rmax1 / anrm1; 
@@ -88,9 +88,11 @@ end
 
 % Compute spectral decomposition
 if method == "mp2"
+
     Atcomp = Qt'*A*Qt;
     Atcomp = (Atcomp + Atcomp')/2;
     [QJ,D,NROT,NSWEEP,INFO] = cjacobi(Atcomp,EVEC);
+
 elseif method == "mp3"
     
     % Apply the preconditioned matrix at high precision
