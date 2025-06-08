@@ -17,7 +17,8 @@ function [V,D,NROT,NSWEEP,BOUND,SCOND] = mp_pjacobi(A, method)
 %       The algorithm ONLY works for DOUBLE PRECISION input, as the
 %       algorithm requires a low precision spectral decomposition as a
 %       preconditioner. We simulate the high precision using the Advanpix
-%       Multiprecision Toolbox. 
+%       Multiprecision Toolbox.
+%		
 %
 %   Input:
 %    - A is REAL matrix, dimension (N,N)
@@ -45,6 +46,17 @@ function [V,D,NROT,NSWEEP,BOUND,SCOND] = mp_pjacobi(A, method)
 %       The number of sweep the Jacobi rotation required to converge.
 %       One sweep indicates the Jacobi algorithm has run through all A(i,j)
 %       where i < j.
+%
+%	The following two outputs are only avaliable if method == "mp3"
+%		
+%	 - BOUND is DOUBLE
+%		The theoretical bound derived in our paper. It is, by definition,
+%			7 * n * u * SCOND + sqrt(n) * u
+%		where SCOND is the next output.
+%
+%	 - SCOND is DOUBLE
+%		The condition number of preconditioned matrix. Although it is only %		avaliable theoretically, we approximate it by computing the
+%		 condition number at high precision. 
 %
 %   Author:
 %       Zhengbo Zhou, June 2025, Manchester, UK
@@ -75,9 +87,12 @@ if ( anrm1 > 0 ) && ( anrm1 < rmin1 )
 elseif ( anrm1 > rmax1 )
     isscale1 = 1; 
     sigma1 = rmax1 / anrm1; 
-end 
+end
+
 if isscale1 == 1 
-    Aprime = sigma1 * A; 
+    Aprime = sigma1 * A;
+else
+    Aprime = A; 
 end
 
 [Qlow,~] = eig(single(Aprime));
@@ -140,7 +155,7 @@ if (INFO == -1)
 end
 
 % Further information is required 
-if nargout >= 5
+if ( nargout >= 5 ) && ( method == "mp3" )
     n = size(A,1);
     u = 2^(-53);
     p1 = sqrt(n); p2 = 7*n;
