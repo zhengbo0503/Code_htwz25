@@ -96,10 +96,10 @@ function ComputeError( Λᵣ, Λⱼ, Vⱼ, A )
     return fwderr, bwderr, orterr
 end
 
-run_order = false;
-
 ###########################################################################################
 # Fix matrix condition number and varying the matrix order 
+run_order = true;
+
 if run_order 
     # N = Int64.(round.(10 .^ range(2,3,length=10)));
     N = Int64.(round.(range(100,1000,length=20)));
@@ -160,56 +160,60 @@ end
 
 ##########################################################################
 # Fix matrix order and varying the condition number
-kappa = Int64.(round.(10 .^ range(3,14,length=20)));
-n = Int64.(500);
+run_kappa = true;
 
-# Set up the intermediate variables
-fwderrm2 = zeros(Float64, length(kappa), 1); 
-bwderrm2 = zeros(Float64, length(kappa), 1); 
-orterrm2 = zeros(Float64, length(kappa), 1); 
+if run_kappa 
+    kappa = Int64.(round.(10 .^ range(3,14,length=20)));
+    n = Int64.(500);
 
-fwderrm3 = zeros(Float64, length(kappa), 1); 
-bwderrm3 = zeros(Float64, length(kappa), 1); 
-orterrm3 = zeros(Float64, length(kappa), 1); 
+    # Set up the intermediate variables
+    fwderrm2 = zeros(Float64, length(kappa), 1); 
+    bwderrm2 = zeros(Float64, length(kappa), 1); 
+    orterrm2 = zeros(Float64, length(kappa), 1); 
 
-fwderrj = zeros(Float64, length(kappa), 1); 
-bwderrj = zeros(Float64, length(kappa), 1); 
-orterrj = zeros(Float64, length(kappa), 1); 
+    fwderrm3 = zeros(Float64, length(kappa), 1); 
+    bwderrm3 = zeros(Float64, length(kappa), 1); 
+    orterrm3 = zeros(Float64, length(kappa), 1); 
 
-tm2 = zeros(Float64, length(kappa), 1); 
-tm3 = zeros(Float64, length(kappa), 1); 
-tj = zeros(Float64, length(kappa), 1); 
-tm2Decompose = zeros(Float64, length(kappa), 4); 
-tm3Decompose = zeros(Float64, length(kappa), 4); 
+    fwderrj = zeros(Float64, length(kappa), 1); 
+    bwderrj = zeros(Float64, length(kappa), 1); 
+    orterrj = zeros(Float64, length(kappa), 1); 
 
-# Reset the random seed
-Random.seed!(1);
+    tm2 = zeros(Float64, length(kappa), 1); 
+    tm3 = zeros(Float64, length(kappa), 1); 
+    tj = zeros(Float64, length(kappa), 1); 
+    tm2Decompose = zeros(Float64, length(kappa), 4); 
+    tm3Decompose = zeros(Float64, length(kappa), 4); 
 
-for i ∈ eachindex(kappa)
-    kA = kappa[i];
-    A = randsvd(Float64, n, n, -1*kA, 3); 
-    
-    A1 = copy(A); 
-    time1 = time(); 
-    jacobi_eigen!(A1); 
-    tj[i] = time() - time1; 
+    # Reset the random seed
+    Random.seed!(1);
 
-    A2 = copy(A); 
-    time1 = time(); 
-    _,_,_,recordTime2 = mp2_jacobi_eigen!(A2, Float32); 
-    tm2[i] = time() - time1; 
-    tm2Decompose[i,:] = recordTime2
+    for i ∈ eachindex(kappa)
+        kA = kappa[i];
+        A = randsvd(Float64, n, n, -1*kA, 3); 
+        
+        A1 = copy(A); 
+        time1 = time(); 
+        jacobi_eigen!(A1); 
+        tj[i] = time() - time1; 
 
-    A3 = copy(A); 
-    time1 = time();
-    _,_,_,recordTime3 = mp3_jacobi_eigen!(A3, Float32, Float128); 
-    tm3[i] = time() - time1; 
-    tm3Decompose[i,:] = recordTime3
+        A2 = copy(A); 
+        time1 = time(); 
+        _,_,_,recordTime2 = mp2_jacobi_eigen!(A2, Float32); 
+        tm2[i] = time() - time1; 
+        tm2Decompose[i,:] = recordTime2
 
-    println("Finished $i of $(length(kappa)) for k(A) = $kA")
-end
+        A3 = copy(A); 
+        time1 = time();
+        _,_,_,recordTime3 = mp3_jacobi_eigen!(A3, Float32, Float128); 
+        tm3[i] = time() - time1; 
+        tm3Decompose[i,:] = recordTime3
 
-# Store the data into CSV
-outputData = [kappa tj tm2 tm3 tm2Decompose tm3Decompose]
-df = DataFrame(outputData, [:kappa, :tj, :tm2, :tm3, :tm2Prec, :tm2Apply, :tm2Jacobi, :tm2Else, :tm3Prec, :tm3Apply, :tm3Jacobi, :tm3Else])
-CSV.write("./result/timing_cnd.csv", df)
+        println("Finished $i of $(length(kappa)) for k(A) = $kA")
+    end
+
+    # Store the data into CSV
+    outputData = [kappa tj tm2 tm3 tm2Decompose tm3Decompose]
+    df = DataFrame(outputData, [:kappa, :tj, :tm2, :tm3, :tm2Prec, :tm2Apply, :tm2Jacobi, :tm2Else, :tm3Prec, :tm3Apply, :tm3Jacobi, :tm3Else])
+    CSV.write("./result/timing_cnd.csv", df)
+end 

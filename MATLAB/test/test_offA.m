@@ -2,6 +2,7 @@
 
 % Initialization
 clc; clear; close all; rng(1);
+addpath("../src/");
 
 % Parameters
 NoP = 20;

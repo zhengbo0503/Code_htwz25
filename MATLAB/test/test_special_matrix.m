@@ -1,5 +1,6 @@
 %TEST7 - Test for special matrices. (FIG 4) 
 
+addpath("../src/");
 %% (a)
 clear; clc; close all;
 n = 100;

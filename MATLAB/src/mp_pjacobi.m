@@ -123,13 +123,15 @@ elseif method == "mp3"
 
     % In this part, one should notice, it will ensure the overflow does not
     % happened.
+    
     if ( anrm > 0 ) && ( anrm < rmin ) 
         isscale = 1; 
         sigma = rmin / anrm; 
     elseif ( anrm > rmax )
         isscale = 1; 
         sigma = rmax / anrm; 
-    end 
+    end
+    
     if isscale == 1 
         Athcomp = sigma * Athcomp; 
     end

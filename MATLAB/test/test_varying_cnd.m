@@ -11,6 +11,7 @@
 
 % Test initialization
 clc; clear; close all; rng(1);
+addpath("../src/");
 
 % Parameters 
 n = 100;

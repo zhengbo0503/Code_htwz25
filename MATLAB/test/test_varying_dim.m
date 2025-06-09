@@ -10,6 +10,7 @@
 
 % Test initialization 
 clc; clear; close all; rng(1);
+addpath("../src/");
 
 % Parameters 
 u = float_params('d');

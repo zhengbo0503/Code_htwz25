@@ -59,22 +59,14 @@ grid on
 
 legend("Jacobi $\quad$", "MP2Jacobi $\quad$", "MP3Jacobi $\quad$", Location="north", NumColumns=3);
 
-pause();
-
-export_fig("./output/timing_union.pdf");
-
 %% Figure 2 for Decomposing the timing for Orders
 
 % Apply preconditioner
-close all;
-qdratio = 100;
+figure(2)
+qdratio = 100; 
 
-% MP3 "->", "Color", "#0072BD")
-% MP2 "-x", "Color", "#D95319")
-% MP3(Potential) "--*", "Color", "#77AC30")
-
-subplot(2,2,1);
-% semilogy(N,order_tm2Apply,'-x');
+% Apply preconditioner 
+subplot(2,2,1); 
 plot(N,order_tm3Apply./order_tm2Apply,"->", "Color", "#0072BD");
 hold on;
 plot(N,(order_tm2Apply*qdratio)./order_tm2Apply, "--*", "Color", "#77AC30");
@@ -86,11 +78,9 @@ title("(a) Applying the preconditioner","FontWeight","normal");
 axis square
 grid on
 legend("MP3Jacobi", "MP3Jacobi (Potential)", "location", "best")
-% set(gca, "FontSize", 16);
  
-
-subplot(2,2,2);
 % Apply Jacobi 
+subplot(2,2,2);
 plot(N, order_tm2Jacobi,"-x", "Color", "#D95319");
 hold on;
 plot(N, order_tm3Jacobi, "->", "Color", "#0072BD");
@@ -101,16 +91,14 @@ ylabel("Timings")
 title("(b) Applying the Jacobi algorithm","FontWeight","normal");
 axis square
 grid on
-legend("MP2Jacobi", "MP3Jacobi", "location", "northwest")
-% set(gca, "FontSize", 16);
+legend("MP2Jacobi", "MP3Jacobi", "location", "northwest") 
 
 % Grand all 
 subplot(2,2,3);
 plot(N,order_tm3./order_tj,"->", "Color", "#0072BD");
 hold on;
 plot(N,(order_tm2Apply*(qdratio-1)+order_tm2)./order_tj, "--*", "Color", "#77AC30");
-plot(N,order_tm2./order_tj,"-x", "Color", "#D95319"); 
-% semilogy(N,order_tj,'--^');
+plot(N,order_tm2./order_tj,"-x", "Color", "#D95319");  
 xlim([100,1e3]);
 xlabel("$n$", Interpreter="latex")
 xticks([100,300,500,700,1000]);
@@ -119,7 +107,6 @@ ylim([0.1,2]);
 title("(c) Total time","FontWeight","normal");
 axis square
 grid on
-legend("MP3Jacobi", "MP3Jacobi (Potential)", "MP2Jacobi", "location", "northwest")
-% set(gca, "FontSize", 16);
+legend("MP3Jacobi", "MP3Jacobi (Potential)", "MP2Jacobi", "location", "northwest") 
 
 

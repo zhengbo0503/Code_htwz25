@@ -1,5 +1,6 @@
 %Test on reduction of scaled condition number. (FIG 5)
 clc; clear; rng(1);
+addpath("../src/");
 
 kappa_test = logspace(1,12,20)';
 
